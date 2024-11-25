@@ -1,0 +1,12 @@
+START 
+    MOV AX, @DATA     
+   LOOP:  MOV DS, AX
+    MOV AL, num1
+    AGAIN: MOV BL, num2
+    ADD AL, BL
+    MOV result, AL
+    MOV AH, 4Ch
+    INT 21h
+    VAR1 DB 10    
+    VAR2 DW 10
+END
