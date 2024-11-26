@@ -1,0 +1,101 @@
+create database a3;
+
+use a3;
+
+-- Create Dimension Tables
+CREATE TABLE DimBookTypes (
+    book_type_id INT PRIMARY KEY,
+    book_type_name VARCHAR(255),
+    description VARCHAR(500)
+);
+
+CREATE TABLE DimLocations (
+    location_id INT PRIMARY KEY,
+    location_name VARCHAR(255),
+    country VARCHAR(100)
+);
+
+CREATE TABLE DimAuthors (
+    author_id INT PRIMARY KEY,
+    author_name VARCHAR(255),
+    age INT,
+    country VARCHAR(100)
+);
+
+CREATE TABLE DimPublications (
+    publication_id INT PRIMARY KEY,
+    publication_name VARCHAR(255),
+    country VARCHAR(100),
+    year_established INT
+);
+
+-- Create Fact Table
+CREATE TABLE FactBooks (
+    book_id INT PRIMARY KEY,
+    book_type_id INT,
+    location_id INT,
+    author_id INT,
+    publication_id INT,
+    cost DECIMAL(10, 2),
+    quantity INT,
+    profit DECIMAL(10, 2),
+    year INT,
+    FOREIGN KEY (book_type_id) REFERENCES DimBookTypes(book_type_id),
+    FOREIGN KEY (location_id) REFERENCES DimLocations(location_id),
+    FOREIGN KEY (author_id) REFERENCES DimAuthors(author_id),
+    FOREIGN KEY (publication_id) REFERENCES DimPublications(publication_id)
+);
+
+-- Insert data into Book Types
+INSERT INTO DimBookTypes VALUES
+(1, 'Fiction', 'Books with imaginary stories'),
+(2, 'Non-Fiction', 'Books with factual content'),
+(3, 'Science', 'Books related to scientific topics');
+
+-- Insert data into Locations
+INSERT INTO DimLocations VALUES
+(1, 'New York', 'USA'),
+(2, 'London', 'UK'),
+(3, 'Tokyo', 'Japan');
+
+-- Insert data into Authors
+INSERT INTO DimAuthors VALUES
+(1, 'J.K. Rowling', 58, 'UK'),
+(2, 'Stephen King', 76, 'USA'),
+(3, 'Haruki Murakami', 75, 'Japan');
+
+-- Insert data into Publications
+INSERT INTO DimPublications VALUES
+(1, 'Bloomsbury', 'UK', 1986),
+(2, 'Scribner', 'USA', 1920),
+(3, 'Shinchosha', 'Japan', 1896);
+
+-- Insert data into FactBooks
+INSERT INTO FactBooks VALUES
+(1, 1, 1, 2, 2, 15.00, 500, 2000.00, 2024),
+(2, 2, 2, 1, 1, 20.00, 300, 1500.00, 2024),
+(3, 3, 3, 3, 3, 25.00, 400, 3000.00, 2024);
+
+SELECT 
+    bt.book_type_name,
+    l.location_name,
+    a.author_name,
+    p.publication_name,
+    SUM(f.quantity) AS total_quantity,
+    SUM(f.profit) AS total_profit
+FROM 
+    FactBooks f
+JOIN 
+    DimBookTypes bt ON f.book_type_id = bt.book_type_id
+JOIN 
+    DimLocations l ON f.location_id = l.location_id
+JOIN 
+    DimAuthors a ON f.author_id = a.author_id
+JOIN 
+    DimPublications p ON f.publication_id = p.publication_id
+GROUP BY 
+    bt.book_type_name, l.location_name, a.author_name, p.publication_name
+ORDER BY 
+    total_profit DESC;
+
+

@@ -1,0 +1,171 @@
+create database a5galaxy;
+
+use a5galaxy;
+
+-- Patients Dimension
+CREATE TABLE DimPatients (
+    patient_id INT PRIMARY KEY,
+    patient_name VARCHAR(255),
+    gender CHAR(1),
+    dob DATE
+);
+
+-- Doctors Dimension
+CREATE TABLE DimDoctors (
+    doctor_id INT PRIMARY KEY,
+    doctor_name VARCHAR(255),
+    specialization VARCHAR(100)
+);
+
+-- Hospitals Dimension
+CREATE TABLE DimHospitals (
+    hospital_id INT PRIMARY KEY,
+    hospital_name VARCHAR(255),
+    location VARCHAR(100)
+);
+
+-- Time Dimension
+CREATE TABLE DimTime (
+    time_id INT PRIMARY KEY,
+    date DATE,
+    day VARCHAR(10),
+    month VARCHAR(20),
+    year INT,
+    quarter VARCHAR(10)
+);
+
+-- Resources Dimension
+CREATE TABLE DimResources (
+    resource_id INT PRIMARY KEY,
+    resource_type VARCHAR(50),
+    resource_name VARCHAR(255)
+);
+
+-- Patient Visits Fact Table
+CREATE TABLE FactPatientVisits (
+    visit_id INT PRIMARY KEY,
+    patient_id INT,
+    doctor_id INT,
+    hospital_id INT,
+    time_id INT,
+    total_cost DECIMAL(15, 2),
+    treatment_cost DECIMAL(15, 2),
+    diagnosis_cost DECIMAL(15, 2),
+    medication_cost DECIMAL(15, 2),
+    FOREIGN KEY (patient_id) REFERENCES DimPatients(patient_id),
+    FOREIGN KEY (doctor_id) REFERENCES DimDoctors(doctor_id),
+    FOREIGN KEY (hospital_id) REFERENCES DimHospitals(hospital_id),
+    FOREIGN KEY (time_id) REFERENCES DimTime(time_id)
+);
+
+-- Hospital Resources Fact Table
+CREATE TABLE FactHospitalResources (
+    resource_id INT PRIMARY KEY,
+    hospital_id INT,
+    time_id INT,
+    resource_cost DECIMAL(15, 2),
+    resource_quantity INT,
+    FOREIGN KEY (hospital_id) REFERENCES DimHospitals(hospital_id),
+    FOREIGN KEY (time_id) REFERENCES DimTime(time_id),
+    FOREIGN KEY (resource_id) REFERENCES DimResources(resource_id)
+);
+
+
+-- DimPatients
+INSERT INTO DimPatients VALUES (1, 'John Doe', 'M', '1985-06-15');
+INSERT INTO DimPatients VALUES (2, 'Jane Smith', 'F', '1990-03-22');
+
+-- DimDoctors
+INSERT INTO DimDoctors VALUES (1, 'Dr. Sarah Johnson', 'Cardiology');
+INSERT INTO DimDoctors VALUES (2, 'Dr. Michael Lee', 'Orthopedics');
+
+-- DimHospitals
+INSERT INTO DimHospitals VALUES (1, 'City Hospital', 'New York');
+INSERT INTO DimHospitals VALUES (2, 'Green Valley Clinic', 'San Francisco');
+
+-- DimTime
+INSERT INTO DimTime VALUES (1, '2024-11-01', 'Friday', 'November', 2024, 'Q4');
+INSERT INTO DimTime VALUES (2, '2024-11-02', 'Saturday', 'November', 2024, 'Q4');
+
+-- DimResources
+INSERT INTO DimResources VALUES (1, 'Equipment', 'MRI Machine');
+INSERT INTO DimResources VALUES (2, 'Facility', 'ICU Bed');
+
+-- FactPatientVisits
+INSERT INTO FactPatientVisits VALUES
+(1, 1, 1, 1, 1, 1000.00, 500.00, 300.00, 200.00),
+(2, 2, 2, 2, 2, 1200.00, 600.00, 400.00, 200.00);
+
+-- FactHospitalResources
+INSERT INTO FactHospitalResources VALUES
+(1, 1, 1, 5000.00, 3),
+(2, 2, 2, 8000.00, 2);
+
+
+SELECT 
+    p.patient_name,
+    d.doctor_name,
+    SUM(f.total_cost) AS total_spent
+FROM 
+    FactPatientVisits f
+JOIN 
+    DimPatients p ON f.patient_id = p.patient_id
+JOIN 
+    DimDoctors d ON f.doctor_id = d.doctor_id
+GROUP BY 
+    p.patient_name, d.doctor_name
+ORDER BY 
+    total_spent DESC;
+
+SELECT 
+    h.hospital_name,
+    r.resource_type,
+    r.resource_name,
+    SUM(f.resource_cost) AS total_resource_cost
+FROM 
+    FactHospitalResources f
+JOIN 
+    DimHospitals h ON f.hospital_id = h.hospital_id
+JOIN 
+    DimResources r ON f.resource_id = r.resource_id
+GROUP BY 
+    h.hospital_name, r.resource_type, r.resource_name
+ORDER BY 
+    total_resource_cost DESC;
+
+SELECT 
+    t.year,
+    t.quarter,
+    h.hospital_name,
+    SUM(f.total_cost) AS total_revenue
+FROM 
+    FactPatientVisits f
+JOIN 
+    DimTime t ON f.time_id = t.time_id
+JOIN 
+    DimHospitals h ON f.hospital_id = h.hospital_id
+GROUP BY 
+    t.year, t.quarter, h.hospital_name
+ORDER BY 
+    total_revenue DESC;
+    
+    
+    
+SELECT 
+    p.patient_name,
+    d.doctor_name,
+    SUM(f.total_cost) AS total_spent
+FROM 
+    FactPatientVisits f
+JOIN 
+    DimPatients p ON f.patient_id = p.patient_id
+JOIN 
+    DimDoctors d ON f.doctor_id = d.doctor_id
+GROUP BY 
+    p.patient_name, d.doctor_name
+ORDER BY 
+    total_spent DESC;
+
+
+
+

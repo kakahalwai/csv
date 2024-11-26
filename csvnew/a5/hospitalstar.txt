@@ -1,0 +1,93 @@
+create database a5star;
+
+use a5star;
+
+-- Dimension Tables
+CREATE TABLE DimPatients (
+    patient_id INT PRIMARY KEY,
+    patient_name VARCHAR(255),
+    gender CHAR(1),
+    dob DATE,
+    address VARCHAR(255),
+    phone VARCHAR(15)
+);
+
+CREATE TABLE DimDoctors (
+    doctor_id INT PRIMARY KEY,
+    doctor_name VARCHAR(255),
+    specialization VARCHAR(100),
+    experience_years INT,
+    phone VARCHAR(15)
+);
+
+CREATE TABLE DimHospitals (
+    hospital_id INT PRIMARY KEY,
+    hospital_name VARCHAR(255),
+    location VARCHAR(100),
+    capacity INT
+);
+
+CREATE TABLE DimTime (
+    time_id INT PRIMARY KEY,
+    date DATE,
+    day VARCHAR(10),
+    month VARCHAR(20),
+    year INT,
+    quarter VARCHAR(10)
+);
+
+-- Fact Table
+CREATE TABLE FactPatientVisits (
+    visit_id INT PRIMARY KEY,
+    patient_id INT,
+    doctor_id INT,
+    hospital_id INT,
+    time_id INT,
+    total_cost DECIMAL(15, 2),
+    treatment_cost DECIMAL(15, 2),
+    diagnosis_cost DECIMAL(15, 2),
+    medication_cost DECIMAL(15, 2),
+    FOREIGN KEY (patient_id) REFERENCES DimPatients(patient_id),
+    FOREIGN KEY (doctor_id) REFERENCES DimDoctors(doctor_id),
+    FOREIGN KEY (hospital_id) REFERENCES DimHospitals(hospital_id),
+    FOREIGN KEY (time_id) REFERENCES DimTime(time_id)
+);
+
+-- Insert data into Dimensions
+INSERT INTO DimPatients VALUES
+(1, 'John Doe', 'M', '1985-06-15', '123 Elm St', '1234567890'),
+(2, 'Jane Smith', 'F', '1990-03-22', '456 Maple Ave', '9876543210');
+
+INSERT INTO DimDoctors VALUES
+(1, 'Dr. Sarah Johnson', 'Cardiology', 15, '1112223333'),
+(2, 'Dr. Michael Lee', 'Orthopedics', 10, '4445556666');
+
+INSERT INTO DimHospitals VALUES
+(1, 'City Hospital', 'New York', 200),
+(2, 'Green Valley Clinic', 'San Francisco', 50);
+
+INSERT INTO DimTime VALUES
+(1, '2024-11-01', 'Friday', 'November', 2024, 'Q4'),
+(2, '2024-11-02', 'Saturday', 'November', 2024, 'Q4');
+
+-- Insert data into FactPatientVisits
+INSERT INTO FactPatientVisits VALUES
+(1, 1, 1, 1, 1, 1000.00, 500.00, 300.00, 200.00),
+(2, 2, 2, 2, 2, 1200.00, 600.00, 400.00, 200.00);
+
+
+SELECT 
+    h.hospital_name,
+    p.patient_name,
+    SUM(f.total_cost) AS total_spent
+FROM 
+    FactPatientVisits f
+JOIN 
+    DimHospitals h ON f.hospital_id = h.hospital_id
+JOIN 
+    DimPatients p ON f.patient_id = p.patient_id
+GROUP BY 
+    h.hospital_name, p.patient_name
+ORDER BY 
+    total_spent DESC;
+

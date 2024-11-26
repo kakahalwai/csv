@@ -1,0 +1,102 @@
+create database a2;
+
+use a2;
+
+-- Create Dimension Tables
+CREATE TABLE DimCustomers (
+    customer_id INT PRIMARY KEY,
+    customer_name VARCHAR(255),
+    billing_address VARCHAR(255),
+    shipping_address VARCHAR(255),
+    region VARCHAR(100),
+    country VARCHAR(100)
+);
+
+CREATE TABLE DimProducts (
+    product_id INT PRIMARY KEY,
+    product_name VARCHAR(255),
+    category VARCHAR(100),
+    price DECIMAL(10, 2)
+);
+
+CREATE TABLE DimPromotions (
+    promotion_id INT PRIMARY KEY,
+    promotion_name VARCHAR(255),
+    description VARCHAR(255),
+    discount_percentage DECIMAL(5, 2)
+);
+
+CREATE TABLE DimSalesReps (
+    sales_rep_id INT PRIMARY KEY,
+    sales_rep_name VARCHAR(255),
+    region VARCHAR(100),
+    email VARCHAR(255)
+);
+
+-- Create Fact Table
+CREATE TABLE FactOrders (
+    order_id INT PRIMARY KEY,
+    customer_id INT,
+    product_id INT,
+    promotion_id INT,
+    sales_rep_id INT,
+    order_date DATE,
+    requested_ship_date DATE,
+    quantity INT,
+    gross_amount DECIMAL(10, 2),
+    discount DECIMAL(10, 2),
+    currency VARCHAR(10),
+    net_amount DECIMAL(10, 2),
+    FOREIGN KEY (customer_id) REFERENCES DimCustomers(customer_id),
+    FOREIGN KEY (product_id) REFERENCES DimProducts(product_id),
+    FOREIGN KEY (promotion_id) REFERENCES DimPromotions(promotion_id),
+    FOREIGN KEY (sales_rep_id) REFERENCES DimSalesReps(sales_rep_id)
+);
+
+-- Insert data into Customers
+INSERT INTO DimCustomers VALUES
+(1, 'John Doe', '123 Elm Street', '456 Maple Street', 'North', 'USA'),
+(2, 'Jane Smith', '789 Oak Street', '321 Pine Street', 'South', 'Canada');
+
+-- Insert data into Products
+INSERT INTO DimProducts VALUES
+(1, 'Laptop', 'Electronics', 1000.00),
+(2, 'Phone', 'Electronics', 500.00);
+
+-- Insert data into Promotions
+INSERT INTO DimPromotions VALUES
+(1, 'Holiday Sale', '10% off all electronics', 10.00),
+(2, 'Clearance', '50% off select items', 50.00);
+
+-- Insert data into Sales Representatives
+INSERT INTO DimSalesReps VALUES
+(1, 'Alice Johnson', 'North', 'alice@example.com'),
+(2, 'Bob Williams', 'South', 'bob@example.com');
+
+-- Insert data into FactOrders
+INSERT INTO FactOrders VALUES
+(1, 1, 1, 1, 1, '2024-11-01', '2024-11-05', 2, 2000.00, 200.00, 'USD', 1800.00),
+(2, 2, 2, 2, 2, '2024-11-02', '2024-11-06', 1, 500.00, 250.00, 'USD', 250.00);
+
+
+SELECT 
+    c.customer_name,
+    p.product_name,
+    pr.promotion_name,
+    sr.sales_rep_name,
+    SUM(f.net_amount) AS total_net_amount
+FROM 
+    FactOrders f
+JOIN 
+    DimCustomers c ON f.customer_id = c.customer_id
+JOIN 
+    DimProducts p ON f.product_id = p.product_id
+JOIN 
+    DimPromotions pr ON f.promotion_id = pr.promotion_id
+JOIN 
+    DimSalesReps sr ON f.sales_rep_id = sr.sales_rep_id
+GROUP BY 
+    c.customer_name, p.product_name, pr.promotion_name, sr.sales_rep_name
+ORDER BY 
+    total_net_amount DESC;
+
