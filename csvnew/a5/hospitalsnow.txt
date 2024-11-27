@@ -1,0 +1,161 @@
+create database a5snow;
+
+use a5snow;
+
+-- Patient Dimension
+CREATE TABLE DimPatients (
+    patient_id INT PRIMARY KEY,
+    patient_name VARCHAR(255),
+    gender CHAR(1),
+    dob DATE
+);
+
+CREATE TABLE PatientAddress (
+    patient_id INT PRIMARY KEY,
+    address VARCHAR(255),
+    phone VARCHAR(15),
+    FOREIGN KEY (patient_id) REFERENCES DimPatients(patient_id)
+);
+
+-- Doctor Dimension
+CREATE TABLE DimDoctors (
+    doctor_id INT PRIMARY KEY,
+    doctor_name VARCHAR(255),
+    specialization VARCHAR(100)
+);
+
+CREATE TABLE DoctorDetails (
+    doctor_id INT PRIMARY KEY,
+    experience_years INT,
+    phone VARCHAR(15),
+    FOREIGN KEY (doctor_id) REFERENCES DimDoctors(doctor_id)
+);
+
+-- Hospital Dimension
+CREATE TABLE DimHospitals (
+    hospital_id INT PRIMARY KEY,
+    hospital_name VARCHAR(255)
+);
+
+CREATE TABLE HospitalDetails (
+    hospital_id INT PRIMARY KEY,
+    location VARCHAR(100),
+    capacity INT,
+    FOREIGN KEY (hospital_id) REFERENCES DimHospitals(hospital_id)
+);
+
+-- Time Dimension
+CREATE TABLE DimTime (
+    time_id INT PRIMARY KEY,
+    date DATE,
+    day VARCHAR(10),
+    month VARCHAR(20)
+);
+
+CREATE TABLE YearQuarter (
+    time_id INT PRIMARY KEY,
+    year INT,
+    quarter VARCHAR(10),
+    FOREIGN KEY (time_id) REFERENCES DimTime(time_id)
+);
+
+-- Fact Table
+CREATE TABLE FactPatientVisits (
+    visit_id INT PRIMARY KEY,
+    patient_id INT,
+    doctor_id INT,
+    hospital_id INT,
+    time_id INT,
+    total_cost DECIMAL(15, 2),
+    treatment_cost DECIMAL(15, 2),
+    diagnosis_cost DECIMAL(15, 2),
+    medication_cost DECIMAL(15, 2),
+    FOREIGN KEY (patient_id) REFERENCES DimPatients(patient_id),
+    FOREIGN KEY (doctor_id) REFERENCES DimDoctors(doctor_id),
+    FOREIGN KEY (hospital_id) REFERENCES DimHospitals(hospital_id),
+    FOREIGN KEY (time_id) REFERENCES DimTime(time_id)
+);
+
+-- DimPatients and PatientAddress
+INSERT INTO DimPatients VALUES (1, 'John Doe', 'M', '1985-06-15');
+INSERT INTO PatientAddress VALUES (1, '123 Elm St', '1234567890');
+
+INSERT INTO DimPatients VALUES (2, 'Jane Smith', 'F', '1990-03-22');
+INSERT INTO PatientAddress VALUES (2, '456 Maple Ave', '9876543210');
+
+-- DimDoctors and DoctorDetails
+INSERT INTO DimDoctors VALUES (1, 'Dr. Sarah Johnson', 'Cardiology');
+INSERT INTO DoctorDetails VALUES (1, 15, '1112223333');
+
+INSERT INTO DimDoctors VALUES (2, 'Dr. Michael Lee', 'Orthopedics');
+INSERT INTO DoctorDetails VALUES (2, 10, '4445556666');
+
+-- DimHospitals and HospitalDetails
+INSERT INTO DimHospitals VALUES (1, 'City Hospital');
+INSERT INTO HospitalDetails VALUES (1, 'New York', 200);
+
+INSERT INTO DimHospitals VALUES (2, 'Green Valley Clinic');
+INSERT INTO HospitalDetails VALUES (2, 'San Francisco', 50);
+
+-- DimTime and YearQuarter
+INSERT INTO DimTime VALUES (1, '2024-11-01', 'Friday', 'November');
+INSERT INTO YearQuarter VALUES (1, 2024, 'Q4');
+
+INSERT INTO DimTime VALUES (2, '2024-11-02', 'Saturday', 'November');
+INSERT INTO YearQuarter VALUES (2, 2024, 'Q4');
+
+INSERT INTO FactPatientVisits VALUES
+(1, 1, 1, 1, 1, 1000.00, 500.00, 300.00, 200.00),
+(2, 2, 2, 2, 2, 1200.00, 600.00, 400.00, 200.00);
+
+
+SELECT 
+    p.patient_name,
+    a.address,
+    SUM(f.total_cost) AS total_spent
+FROM 
+    FactPatientVisits f
+JOIN 
+    DimPatients p ON f.patient_id = p.patient_id
+JOIN 
+    PatientAddress a ON p.patient_id = a.patient_id
+GROUP BY 
+    p.patient_name, a.address
+ORDER BY 
+    total_spent DESC;
+    
+    
+
+SELECT 
+    d.doctor_name,
+    dt.experience_years,
+    SUM(f.total_cost) AS total_revenue
+FROM 
+    FactPatientVisits f
+JOIN 
+    DimDoctors d ON f.doctor_id = d.doctor_id
+JOIN 
+    DoctorDetails dt ON d.doctor_id = dt.doctor_id
+GROUP BY 
+    d.doctor_name, dt.experience_years
+ORDER BY 
+    total_revenue DESC;
+    
+    SELECT 
+    h.hospital_name,
+    hd.location,
+    SUM(f.total_cost) AS total_revenue
+FROM 
+    FactPatientVisits f
+JOIN 
+    DimHospitals h ON f.hospital_id = h.hospital_id
+JOIN 
+    HospitalDetails hd ON h.hospital_id = hd.hospital_id
+GROUP BY 
+    h.hospital_name, hd.location
+ORDER BY 
+    total_revenue DESC;
+
+
+
+
