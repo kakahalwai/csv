@@ -1,0 +1,63 @@
+import java.util.*;
+
+class Quadruple{
+    String op,arg1,arg2,result;
+
+
+    Quadruple(String op,String arg1,String arg2,String result){
+        this.op=op;
+        this.arg1=arg1;
+        this.arg2=arg2;
+        this.result=result;
+    }
+    @Override
+    public String toString(){
+        return "("+op+","+arg1+","+arg2+","+result+")";
+    }
+    String getExpressionKey(){
+        if(op.equals("+")||op.equals("*")){
+            String[] args =new String[]{arg1,arg2};
+            Arrays.sort(args);
+            return op+","+args[0]+","+args[1];
+        }
+        return op+","+arg1+","+arg2;
+    }
+
+}
+public class CSEOptimizer {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Enter the number of quadruples :");
+        int n = Integer.parseInt(sc.nextLine());
+        List<Quadruple> quadruples = new ArrayList<>();
+        System.out.println("Enter each quadruple in format: op arg1 arg2 result");
+        for (int i = 0; i < n; i++) {
+            String[] parts = sc.nextLine().trim().split("\\s+");
+            if (parts.length != 4) {
+                System.out.println("Invalid input. Please enter exactly 4 items.");
+                i--;
+                continue;
+            }
+            quadruples.add(new Quadruple(parts[0], parts[1], parts[2], parts[3]));
+
+        }
+        Map<String, String> exprmap = new HashMap<>();
+        List<Quadruple> optimized = new ArrayList<>();
+        for (Quadruple q : quadruples) {
+            String key = q.getExpressionKey();
+            if (exprmap.containsKey(key)) {
+                System.out.println("CSE: Replacing " + q.result + " with " + exprmap.get(key));
+                optimized.add(new Quadruple("=", exprmap.get(key), "", q.result));
+            } else {
+                exprmap.put(key, q.result);
+                optimized.add(q);
+
+            }
+        }
+        System.out.println("\nOptimized Quadruples:");
+        for (Quadruple q : optimized) {
+            System.out.println(q);
+
+        }
+    }
+}
