@@ -1,0 +1,102 @@
+import java.util.*;
+
+class Quadruple {
+    String op, arg1, arg2, result;
+
+    Quadruple(String op, String arg1, String arg2, String result) {
+        this.op = op;
+        this.arg1 = arg1;
+        this.arg2 = arg2;
+        this.result = result;
+    }
+
+    @Override
+    public String toString() {
+        return "(" + op + ", " + arg1 + ", " + arg2 + ", " + result + ")";
+    }
+}
+
+public class ConstantOptimization {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter the number of quadruples: ");
+        int n = Integer.parseInt(sc.nextLine());
+
+        List<Quadruple> quadruples = new ArrayList<>();
+        System.out.println("Enter each quadruple as: op arg1 arg2 result");
+        System.out.println("Use '_' for unused operands (e.g., '= 5 _ x')");
+
+        for (int i = 0; i < n; i++) {
+            String[] parts = sc.nextLine().trim().split("\\s+");
+            if (parts.length != 4) {
+                System.out.println("❌ Invalid format. Please enter 4 values.");
+                i--;
+                continue;
+            }
+            quadruples.add(new Quadruple(parts[0], parts[1], parts[2], parts[3]));
+        }
+
+        Map<String, String> constants = new HashMap<>();
+        List<Quadruple> optimized = new ArrayList<>();
+
+        for (Quadruple q : quadruples) {
+            String a1 = q.arg1;
+            String a2 = q.arg2;
+
+            // Propagation logging
+            if (constants.containsKey(a1)) {
+                System.out.println("Propagated: " + a1 + " → " + constants.get(a1));
+                a1 = constants.get(a1);
+            }
+            if (constants.containsKey(a2)) {
+                System.out.println("Propagated: " + a2 + " → " + constants.get(a2));
+                a2 = constants.get(a2);
+            }
+
+            // Constant folding
+            if (isNumber(a1) && isNumber(a2)) {
+                int foldedValue = evaluate(q.op, Integer.parseInt(a1), Integer.parseInt(a2));
+                System.out.println("Folding: " + a1 + " " + q.op + " " + a2 + " = " + foldedValue);
+                constants.put(q.result, String.valueOf(foldedValue));
+                optimized.add(new Quadruple("=", String.valueOf(foldedValue), "_", q.result));
+            }
+            // Constant or propagated assignment
+            else if (q.op.equals("=") && (isNumber(a1) || constants.containsKey(a1))) {
+                String value = constants.getOrDefault(a1, a1);
+                if (!value.equals(a1)) {
+                    System.out.println("Propagated: " + a1 + " → " + value);
+                }
+                constants.put(q.result, value);
+                optimized.add(new Quadruple("=", value, "_", q.result));
+            }
+            // No optimization
+            else {
+                optimized.add(new Quadruple(q.op, a1, a2, q.result));
+            }
+        }
+
+        // ✅ FINAL PRINT
+        System.out.println("\n✅ Optimized Quadruples:");
+        for (Quadruple q : optimized) {
+            System.out.println(q);
+        }
+    }
+
+    static boolean isNumber(String s) {
+        return s.matches("-?\\d+");
+    }
+
+    static int evaluate(String op, int a, int b) {
+        return switch (op) {
+            case "+" -> a + b;
+            case "-" -> a - b;
+            case "*" -> a * b;
+            case "/" -> (b != 0 ? a / b : 0);
+            default -> {
+                System.out.println("⚠️ Unknown operator: " + op);
+                yield 0;
+            }
+        };
+    }
+}
