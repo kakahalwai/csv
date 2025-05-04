@@ -1,0 +1,13 @@
+yacc:
+bison -d lsl.y
+flex lsl.l
+gcc  lsl.tab.c lex.yy.c -o lsl_parser -lfl
+./lsl_parser
+
+flex:
+flex file.l
+gcc lex.yy.c -o fileexe -lfl
+./fileexe
+
+
+
