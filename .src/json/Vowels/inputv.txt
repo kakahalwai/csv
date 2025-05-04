@@ -1,0 +1,3 @@
+Hello, how are you?
+This is a Lex demo.
+It detects vowels.
