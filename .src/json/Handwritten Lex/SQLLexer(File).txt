@@ -1,0 +1,75 @@
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.Scanner;
+
+public class JavaLexerSQLFile {
+    static int line = 1;
+    static int tokenCount = 0;
+
+    static String[] keywords = {
+        "SELECT", "FROM", "WHERE", "INSERT", "INTO", "VALUES", "UPDATE", "SET",
+        "DELETE", "CREATE", "TABLE", "DROP", "ALTER", "JOIN", "ON", "AS", "AND", "OR", "NOT", "NULL", "LIKE", "IN"
+    };
+
+    public static void main(String[] args) {
+        if (args.length < 1) {
+            System.out.println("Usage: java JavaLexerSQLFile <filename.sql>");
+            return;
+        }
+
+        File inputFile = new File(args[0]);
+        try (Scanner scanner = new Scanner(inputFile)) {
+            System.out.println("Reading SQL code from file: " + args[0]);
+
+            while (scanner.hasNextLine()) {
+                String inputLine = scanner.nextLine();
+                processLine(inputLine);
+                line++;
+            }
+
+            System.out.println("\nTotal Tokens: " + tokenCount);
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found: " + args[0]);
+        }
+    }
+
+    static void processLine(String lineText) {
+        lineText = lineText.split("--")[0].trim();  // Remove SQL single-line comments
+        String[] tokens = lineText.split("(?=[(){};.,=<>!+\\-*/])|(?<=[(){};.,=<>!+\\-*/])|\\s+");
+
+        for (String token : tokens) {
+            token = token.trim();
+            if (token.isEmpty()) continue;
+
+            if (isKeyword(token)) {
+                print("KEYWORD", token.toUpperCase());
+            } else if (token.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
+                print("IDENTIFIER", token);
+            } else if (token.matches("[0-9]+(\\.[0-9]+)?")) {
+                print("NUMBER", token);
+            } else if (token.matches("'[^']*'")) {
+                print("STRING", token);
+            } else if (token.matches("[=<>!]+|\\+|\\-|\\*|/")) {
+                print("OPERATOR", token);
+            } else if (token.matches("[(),;.]")) {
+                print("DELIMITER", token);
+            } else {
+                print("❌ UNKNOWN", token);
+            }
+        }
+    }
+
+    static boolean isKeyword(String token) {
+        for (String word : keywords) {
+            if (word.equalsIgnoreCase(token)) return true;
+        }
+        return false;
+    }
+
+    static void print(String type, String token) {
+        System.out.printf("Line %d\t%-10s\t%s\n", line, type, token);
+        if (!type.contains("UNKNOWN")) {
+            tokenCount++;
+        }
+    }
+}

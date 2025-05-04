@@ -1,0 +1,74 @@
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.Scanner;
+
+public class EnglishLexerFile {
+    static int line = 1;
+    static int tokenCount = 0;
+
+    static String[] commonWords = {
+        "the", "is", "are", "was", "were", "has", "have", "had", "a", "an", "in",
+        "on", "of", "to", "and", "but", "or", "with", "as", "by", "for", "from",
+        "that", "this", "those", "these", "it", "he", "she", "they", "we", "you", "I"
+    };
+
+    public static void main(String[] args) {
+        if (args.length < 1) {
+            System.out.println("Usage: java EnglishLexerFile <filename.txt>");
+            return;
+        }
+
+        File inputFile = new File(args[0]);
+        try (Scanner scanner = new Scanner(inputFile)) {
+            System.out.println("Reading English text from: " + args[0]);
+
+            while (scanner.hasNextLine()) {
+                String inputLine = scanner.nextLine();
+                processLine(inputLine);
+                line++;
+            }
+
+            System.out.println("\nTotal Tokens: " + tokenCount);
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found: " + args[0]);
+        }
+    }
+
+    static void processLine(String lineText) {
+        lineText = lineText.trim();
+
+        // Split on punctuation and whitespace, keep punctuation as separate tokens
+        String[] tokens = lineText.split("(?=[.,?!:;\"'])|(?<=[.,?!:;\"'])|\\s+");
+
+        for (String token : tokens) {
+            token = token.trim();
+            if (token.isEmpty()) continue;
+
+            if (isKeyword(token.toLowerCase())) {
+                print("KEYWORD", token);
+            } else if (token.matches("[0-9]+(\\.[0-9]+)?")) {
+                print("NUMBER", token);
+            } else if (token.matches("[.,?!:;\"']")) {
+                print("PUNCTUATION", token);
+            } else if (token.matches("[a-zA-Z]+")) {
+                print("WORD", token);
+            } else {
+                print("UNKNOWN", token);
+            }
+        }
+    }
+
+    static boolean isKeyword(String token) {
+        for (String word : commonWords) {
+            if (word.equalsIgnoreCase(token)) return true;
+        }
+        return false;
+    }
+
+    static void print(String type, String token) {
+        System.out.printf("Line %d\t%-12s\t%s\n", line, type, token);
+        if (!type.equals("UNKNOWN")) {
+            tokenCount++;
+        }
+    }
+}

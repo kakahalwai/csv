@@ -1,0 +1,79 @@
+import java.io.*;
+
+public class JavaLexer {
+    static int line = 1;
+    static int tokenCount = 0;
+
+    // List of Java keywords
+    static String[] keywords = {
+            "class", "args","public", "static", "void", "int", "if", "else", "for", "while", "return", "new", "String"
+    };
+
+    public static void main(String[] args) throws IOException {
+        File file = new File("");  // Make sure input.txt is in your project root
+
+        if (!file.exists()) {
+            System.out.println(" input.txt not found!");
+            return;
+        }
+
+        BufferedReader br = new BufferedReader(new FileReader(file));
+        String text;
+
+        while ((text = br.readLine()) != null) {
+            processLine(text);
+            line++;
+        }
+
+        System.out.println("\nTotal Tokens: " + tokenCount);
+        br.close();
+    }
+
+    // Process each line of code
+    static void processLine(String lineText) {
+        // Remove comments
+        lineText = lineText.split("//")[0].trim();
+
+        // Split by spaces and keep brackets/punctuation separate
+        String[] tokens = lineText.split("(?=[(){};.,\\[\\]])|(?<=[(){};.,\\[\\]])|\\s+");
+
+        for (String token : tokens) {
+            token = token.trim();
+            if (token.isEmpty()) continue;
+
+            if (isKeyword(token)) {
+                print("KEYWORD", token);
+            } else if (token.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
+                print("IDENTIFIER", token);
+            } else if (token.matches("[0-9]+")) {
+                print("NUMBER", token);
+            } else if (token.matches("\".*\"") || token.matches("'.'")) {
+                print("STRING", token);
+            } else if (token.matches("[=+\\-*/<>!&|]+")) {
+                print("OPERATOR", token);
+            } else if (token.matches("[(){};.,\\[\\]]")) {
+                print("DELIMITER", token);
+            } else {
+                print("❌ UNKNOWN", token);
+            }
+        }
+    }
+
+    // Check if a token is a keyword
+    static boolean isKeyword(String token) {
+        for (String word : keywords) {
+            if (word.equals(token)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Print the token details
+    static void print(String type, String token) {
+        System.out.printf("Line %d\t%-10s\t%s\n", line, type, token);
+        if (!type.contains("UNKNOWN")) {
+            tokenCount++;
+        }
+    }
+}

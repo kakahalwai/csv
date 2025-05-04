@@ -1,0 +1,66 @@
+import java.util.Scanner;
+
+public class EnglishLexerRuntime {
+    static int line = 1;
+    static int tokenCount = 0;
+
+    static String[] commonWords = {
+        "the", "is", "are", "was", "were", "has", "have", "had", "a", "an", "in",
+        "on", "of", "to", "and", "but", "or", "with", "as", "by", "for", "from",
+        "that", "this", "those", "these", "it", "he", "she", "they", "we", "you", "I"
+    };
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Enter English sentences (type END to finish):");
+
+        while (true) {
+            String inputLine = scanner.nextLine();
+            if (inputLine.equalsIgnoreCase("END")) break;
+
+            processLine(inputLine);
+            line++;
+        }
+
+        System.out.println("\nTotal Tokens: " + tokenCount);
+        scanner.close();
+    }
+
+    static void processLine(String lineText) {
+        lineText = lineText.trim();
+
+        // Split on punctuation and whitespace, keep punctuation as separate tokens
+        String[] tokens = lineText.split("(?=[.,?!:;\"'])|(?<=[.,?!:;\"'])|\\s+");
+
+        for (String token : tokens) {
+            token = token.trim();
+            if (token.isEmpty()) continue;
+
+            if (isKeyword(token.toLowerCase())) {
+                print("KEYWORD", token);
+            } else if (token.matches("[0-9]+(\\.[0-9]+)?")) {
+                print("NUMBER", token);
+            } else if (token.matches("[.,?!:;\"']")) {
+                print("PUNCTUATION", token);
+            } else if (token.matches("[a-zA-Z]+")) {
+                print("WORD", token);
+            } else {
+                print("UNKNOWN", token);
+            }
+        }
+    }
+
+    static boolean isKeyword(String token) {
+        for (String word : commonWords) {
+            if (word.equalsIgnoreCase(token)) return true;
+        }
+        return false;
+    }
+
+    static void print(String type, String token) {
+        System.out.printf("Line %d\t%-12s\t%s\n", line, type, token);
+        if (!type.equals("UNKNOWN")) {
+            tokenCount++;
+        }
+    }
+}

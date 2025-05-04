@@ -1,0 +1,95 @@
+import java.util.Scanner;
+
+public class CLexerFile {
+    static int line = 1;
+    static int tokenCount = 0;
+
+    static String[] keywords = {
+            "auto", "break", "case", "char", "const", "continue", "default", "do", "double",
+            "else", "enum", "extern", "float", "for", "goto", "if", "inline", "int", "long",
+            "register", "restrict", "return", "short", "signed", "sizeof", "static", "struct",
+            "switch", "typedef", "union", "unsigned", "void", "volatile", "while", "_Bool"
+    };
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Enter your C code line by line (type END to finish):");
+
+        while (true) {
+            String inputLine = scanner.nextLine().trim();
+            if (inputLine.equalsIgnoreCase("END")) break;
+            processLine(inputLine);
+            line++;
+        }
+
+        System.out.println("\nTotal Tokens: " + tokenCount);
+        scanner.close();
+    }
+
+    static void processLine(String lineText) {
+        lineText = lineText.split("//")[0]; // Remove inline comments
+
+        // Handle string literals first
+        while (lineText.contains("\"")) {
+            int start = lineText.indexOf("\"");
+            int end = lineText.indexOf("\"", start + 1);
+            if (end > start) {
+                String strLiteral = lineText.substring(start, end + 1);
+                print("STRING", strLiteral);
+                lineText = lineText.substring(0, start) + lineText.substring(end + 1);
+            } else {
+                break;
+            }
+        }
+
+        // Handle char literals like 'x'
+        while (lineText.contains("'")) {
+            int start = lineText.indexOf("'");
+            if (start + 2 < lineText.length() && lineText.charAt(start + 2) == '\'') {
+                String charLiteral = lineText.substring(start, start + 3);
+                print("CHAR", charLiteral);
+                lineText = lineText.substring(0, start) + lineText.substring(start + 3);
+            } else {
+                break;
+            }
+        }
+
+        // Tokenize the rest
+        String[] tokens = lineText.split("(?=[(){};:,=<>!+\\-*/%&|\\[\\]])|(?<=[(){};:,=<>!+\\-*/%&|\\[\\]])|\\s+");
+
+        for (String token : tokens) {
+            token = token.trim();
+            if (token.isEmpty()) continue;
+
+            if (token.startsWith("#")) {
+                print("PREPROCESSOR", token);
+            } else if (isKeyword(token)) {
+                print("KEYWORD", token);
+            } else if (token.matches("[0-9]+(\\.[0-9]+)?")) {
+                print("NUMBER", token);
+            } else if (token.matches("[a-zA-Z_][a-zA-Z0-9_\\.]*")) {
+                print("IDENTIFIER", token);
+            } else if (token.matches("==|!=|<=|>=|=|\\+|\\-|\\*|/|<|>|&&|\\|\\||!|%")) {
+                print("OPERATOR", token);
+            } else if (token.matches("[(){};:,\\[\\]]")) {
+                print("DELIMITER", token);
+            } else {
+                print(" UNKNOWN", token);
+            }
+        }
+    }
+
+    static boolean isKeyword(String token) {
+        for (String word : keywords) {
+            if (word.equals(token)) return true;
+        }
+        return false;
+    }
+
+    static void print(String type, String token) {
+        System.out.printf("Line %d\t%-12s\t%s\n", line, type, token);
+        if (!type.contains("UNKNOWN")) {
+            tokenCount++;
+        }
+    }
+}

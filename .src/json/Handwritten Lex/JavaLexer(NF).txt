@@ -1,0 +1,67 @@
+import java.util.Scanner;
+
+public class JavaLexer {
+    static int line = 1;
+    static int tokenCount = 0;
+
+    static String[] keywords = {
+        "class", "args", "public", "static", "void", "int", "if", "else", "for", "while", "return", "new", "String"
+    };
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Enter your Java code (type END to finish):");
+
+        String inputLine;
+        while (true) {
+            inputLine = scanner.nextLine();
+            if (inputLine.equalsIgnoreCase("END")) break;
+
+            processLine(inputLine);
+            line++;
+        }
+
+        System.out.println("\nTotal Tokens: " + tokenCount);
+        scanner.close();
+    }
+
+    static void processLine(String lineText) {
+        lineText = lineText.split("//")[0].trim();  // Remove comments
+        String[] tokens = lineText.split("(?=[(){};.,\\[\\]])|(?<=[(){};.,\\[\\]])|\\s+");
+
+        for (String token : tokens) {
+            token = token.trim();
+            if (token.isEmpty()) continue;
+
+            if (isKeyword(token)) {
+                print("KEYWORD", token);
+            } else if (token.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
+                print("IDENTIFIER", token);
+            } else if (token.matches("[0-9]+")) {
+                print("NUMBER", token);
+            } else if (token.matches("\".*\"") || token.matches("'.'")) {
+                print("STRING", token);
+            } else if (token.matches("[=+\\-*/<>!&|]+")) {
+                print("OPERATOR", token);
+            } else if (token.matches("[(){};.,\\[\\]]")) {
+                print("DELIMITER", token);
+            } else {
+                print("❌ UNKNOWN", token);
+            }
+        }
+    }
+
+    static boolean isKeyword(String token) {
+        for (String word : keywords) {
+            if (word.equals(token)) return true;
+        }
+        return false;
+    }
+
+    static void print(String type, String token) {
+        System.out.printf("Line %d\t%-10s\t%s\n", line, type, token);
+        if (!type.contains("UNKNOWN")) {
+            tokenCount++;
+        }
+    }
+}
